@@ -11,7 +11,11 @@
         window.onload = function () {
             var input = document.getElementById('input');
             var output = document.getElementById('output');
-            input.value = localStorage.getItem("inputCalque");
+            var val = localStorage.getItem("inputCalqueLocal");
+            if (val!=null){
+                input.value =val;
+            }
+             
             window.calque = new Calque(input, output);
             input.focus();
         }

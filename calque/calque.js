@@ -12,7 +12,6 @@
     }
 
     function Calque(inputEl, outputEl) {
-        console.log("function Calque");
         this.inputEl = inputEl;
         this.outputEl = outputEl;
         this.parentEl = inputEl.parentNode;
@@ -23,8 +22,7 @@
         this.activeLine = 0;
 
         var handler = function () {
-            console.log("handler");
-            localStorage.setItem("inputCalque", this.inputEl.value);
+            localStorage.setItem("inputCalqueLocal", this.inputEl.value);
             this.updateActiveLine();
             this.input();
             this.inputEl.style.height = Math.max(
