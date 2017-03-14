@@ -1,75 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Calque</title>
     <link rel="icon" type='image/png' href="favicon.png">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="FileSaver.js"></script>
+    
     <script src="math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
     <script src="calque.js"></script>
     <script>
-        window.onload = function () {
-            var input = document.getElementById('input');
-            var output = document.getElementById('output');
-            var val = localStorage.getItem("inputCalqueLocal");
-            if (val!=null){
-                input.value =val;
-            }
-             
-            window.calque = new Calque(input, output);
-            input.focus();
+    window.onload = function() {
+        var input = document.getElementById('input');
+        var output = document.getElementById('output');
+        var val = localStorage.getItem("inputCalqueLocal");
+        if (val != null) {
+            input.value = val;
         }
+        window.calque = new Calque(input, output);
+        input.focus();
+
+        document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
+    }
+
+    function downloadText() {
+      var blob = new Blob([document.getElementById('input').value], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, "calque.txt");
+    }
+
+    function readSingleFile(evt) {
+        var f = evt.target.files[0];
+        //Retrieve the first (and only!) File from the FileList object
+        if (f) {
+            var r = new FileReader();
+            r.onload = function(e) {
+                document.getElementById('input').value = e.target.result;
+                // strColorMapLoc = contents.replace(/\s/g, ',');
+                // if (strColorMapLoc.split(',').length == 768) {
+                //     strColorMap = strColorMapLoc;
+                //     redraw("INDEX");
+                // } else if (strColorMapLoc.split(',').length < 768) {
+                //     strColorMapLoc = '';
+                //     alert("Not enough elements, expecting 768");
+                // } else if (strColorMapLoc.split(',').length > 768) {
+                //     strColorMapLoc = '';
+                //     alert("too much elements, expecting 768");
+                // }
+
+            }
+            r.readAsText(f);
+        } else {
+            alert("Failed to load file");
+        }
+    }    
     </script>
+
 </head>
+
 <body>
+
+    <div class="fixed-action-btn horizontal click-to-toggle">
+        <a class="btn-floating btn-large red">
+            <i class="material-icons">menu</i>
+        </a>
+        <ul>
+            <li><a class="btn-floating red" onclick="downloadText();"><i class="material-icons">play_for_work</i></a></li>
+            <li><label for="fileinput" class="btn-floating yellow darken-1"><input type="file" id="fileinput"><i class="material-icons">publish</i></input></label></li>
+
+        </ul>
+    </div>
     <div class="interface">
         <div class="output" id="output"></div>
         <textarea class="input" id="input">## Calque
-
-# Expressions
-2 + 2 * 2
-sqrt(3^2 + 4^2)
-2 inch to cm
-cos(45 deg)
-
-# Variables
-a = 25
-b = a * 2
-postal code = 1122
-
-# Expression trees
-animals:
-  cats = 2
-  dogs = 3
-plants:
-  trees = 20
-  vegetables:
-    potatos = 10
-    carrots = 10
-
-# Functions
-pow2(x) = x ^ 2
-pow2(6)
-
-# Last result
-2 * 2
-last + 1
-
-# Calque on GitHub: https://github.com/grimalschi/calque
-# Using Math.js: https://github.com/josdejong/mathjs</textarea>
+      # Expressions
+      2 + 2 * 2
+      sqrt(3^2 + 4^2)
+      2 inch to cm
+      cos(45 deg)
+      # Variables
+      a = 25
+      b = a * 2
+      postal code = 1122
+      # Expression trees
+      animals:
+        cats = 2
+        dogs = 3
+      plants:
+        trees = 20
+        vegetables:
+          potatos = 10
+          carrots = 10
+      # Functions
+      pow2(x) = x ^ 2
+      pow2(6)
+      # Last result
+      2 * 2
+      last + 1
+      # Calque on GitHub: https://github.com/grimalschi/calque
+      # Using Math.js: https://github.com/josdejong/mathjs
+    </textarea>        
     </div>
-
     <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    (function(i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function() {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+            m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 
-  ga('create', 'UA-81233161-1', 'auto');
-  ga('send', 'pageview');
-
-</script>
- 
+    ga('create', 'UA-81233161-1', 'auto');
+    ga('send', 'pageview');
+    </script>
 </body>
 
 </html>
