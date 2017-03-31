@@ -1,5 +1,11 @@
-# calque
-Improved calculator
+## Calque
+Calculator from https://github.com/grimalschi/calque
 
-## TODO
-- make saveable/loadable
+## Link
+https://ryfeus.github.io/calque/
+
+## Additional features
+
+- saves information in browser (web storage API)
+- download info
+- upload info

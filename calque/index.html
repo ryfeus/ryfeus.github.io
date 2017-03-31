@@ -29,29 +29,38 @@
     }
 
     function downloadText() {
-      var blob = new Blob([document.getElementById('input').value], {type: "text/plain;charset=utf-8"});
+      var vecInput = document.getElementById('input').value.split('\n');
+      var vecOutputElems = document.getElementById('output').children;
+      var strTextFinal = '';
+      for (var i = 0;i<vecInput.length;i++){
+        var strOutputText = vecOutputElems[i].lastElementChild.innerText;
+        if (strOutputText==''){
+          strTextFinal = strTextFinal.concat('\n',vecInput[i]);
+        }else{
+          strTextFinal = strTextFinal.concat('\n',vecInput[i],' = ',strOutputText);
+        }   
+      }
+      var blob = new Blob([strTextFinal], {type: "text/plain;charset=utf-8"});
       saveAs(blob, "calque.txt");
     }
 
     function readSingleFile(evt) {
         var f = evt.target.files[0];
-        //Retrieve the first (and only!) File from the FileList object
         if (f) {
             var r = new FileReader();
             r.onload = function(e) {
-                document.getElementById('input').value = e.target.result;
-                // strColorMapLoc = contents.replace(/\s/g, ',');
-                // if (strColorMapLoc.split(',').length == 768) {
-                //     strColorMap = strColorMapLoc;
-                //     redraw("INDEX");
-                // } else if (strColorMapLoc.split(',').length < 768) {
-                //     strColorMapLoc = '';
-                //     alert("Not enough elements, expecting 768");
-                // } else if (strColorMapLoc.split(',').length > 768) {
-                //     strColorMapLoc = '';
-                //     alert("too much elements, expecting 768");
-                // }
-
+                var strInputOutput = e.target.result;
+                var vecStrInputOutput = strInputOutput.split('\n');
+                var strInput = '';
+                for (var i=0;i<vecStrInputOutput.length;i++){
+                  var vecStrLine = vecStrInputOutput[i].split('=')
+                  if (vecStrLine.length==1){
+                    strInput = strInput.concat('\n',vecStrLine[0]);
+                  }else{
+                    strInput = strInput.concat('\n',vecStrLine.slice(0,-1).join(' = '));
+                  }
+                }
+                document.getElementById('input').value = strInput;
             }
             r.readAsText(f);
         } else {
