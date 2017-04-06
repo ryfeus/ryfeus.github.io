@@ -4,12 +4,17 @@ var ctx = canvas.getContext("2d");
 var offsetX = document.getElementById('canvas').offsetLeft;
 var offsetY = document.getElementById('canvas').offsetTop;
 
-var xPadding = 100;
-var yPadding = 100;
+var xPadding = 50;
+var yPadding = 50;
 
-var canvasWidth = 1000;
+var canvasWidth = 600;
 var canvasHeight = 600;
 
+canvas.style.width = '100%';
+canvas.style.height = '100%';
+// ...then set the internal size to match
+canvas.width = canvas.offsetWidth;
+canvas.height = canvas.offsetHeight;
 ctx.canvas.width = canvasWidth;
 ctx.canvas.height = canvasHeight;
 
@@ -98,47 +103,6 @@ canvas.addEventListener("drop", function(evt) {
 updateAxis();
 addTable();
 
-
-
-// // Draw the X value texts
-// for(var i = 0; i < data.values.length; i ++) {
-//     // uses data.values[i].X
-//     ctx.fillText(data.values[i].X, getXPixel(data.values[i].X), canvas.height - yPadding + 20);
-// }
-
-// // Draw the Y value texts
-// ctx.textAlign = "right";
-// ctx.textBaseline = "middle";
-
-// for(var i = 0; i < getMaxY(); i += 10) {
-//     ctx.fillText(i, xPadding - 10, getYPixel(i));
-// }
-
-// ctx.strokeStyle = '#f00';
-
-
-// // Draw the line canvas
-// ctx.beginPath();
-// ctx.moveTo(getXPixel(data.values[0].X), getYPixel(data.values[0].Y));
-// for(var i = 1; i < data.values.length; i ++) {
-//     ctx.lineTo(getXPixel(data.values[i].X), getYPixel(data.values[i].Y));
-// }
-// ctx.stroke();
-
-// // Draw the dots
-// ctx.fillStyle = '#333';
-
-// for(var i = 0; i < data.values.length; i ++) {  
-//     ctx.beginPath();
-//     ctx.arc(getXPixel(data.values[i].X), getYPixel(data.values[i].Y), 4, 0, Math.PI * 2, true);
-//     ctx.fill();
-// }
-
-
-
-
-
-
 function togglePin() {
     if (flagPin) {
         flagPin = false;
@@ -153,31 +117,38 @@ function addTable() {
     var header = newTable.createTHead();
     var row = header.insertRow(0);
     var cell = row.insertCell(0);
-    cell.innerHTML = "Y";
-    var cell = row.insertCell(1);
     cell.innerHTML = "X";
+    var cell = row.insertCell(1);
+    cell.innerHTML = "Y";
     document.getElementById('tables').appendChild(newTable);
     tableGlobal = newTable;
 }
 
 function drawAxis() {
 
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.strokeStyle = '#333';
     ctx.font = 'italic 8pt sans-serif';
     ctx.textAlign = "center";
 
     // Draw the axises
     ctx.beginPath();
-    ctx.moveTo(xPadding, 0);
-    ctx.lineTo(xPadding, canvas.height - yPadding);
-    ctx.lineTo(canvas.width, canvas.height - yPadding);
+    ctx.moveTo(xPadding, canvas.height - yPadding);
+    ctx.lineTo(xPadding, 0);
     ctx.stroke();
 
-
+    ctx.beginPath();
+    ctx.moveTo(xPadding, canvas.height - yPadding);
+    ctx.lineTo(canvas.width, canvas.height - yPadding);
+    ctx.stroke();
     // // Draw the X value texts
+    ctx.lineWidth = 1;
     for (var i = 0; i <= numMaxX - numMinX; i += numStepX) {
         ctx.fillText(i, getXPixel(i), canvas.height - yPadding + 20);
+        ctx.beginPath();
+        ctx.moveTo(getXPixel(i), canvas.height - yPadding);
+        ctx.lineTo(getXPixel(i), 0);
+        ctx.stroke();
     }
 
     ctx.textAlign = "right";
@@ -185,6 +156,10 @@ function drawAxis() {
 
     for (var i = 0; i <= numMaxY - numMinY; i += numStepY) {
         ctx.fillText(i, xPadding - 10, getYPixel(i));
+        ctx.beginPath();
+        ctx.moveTo(xPadding, getYPixel(i));
+        ctx.lineTo(canvas.width, getYPixel(i));
+        ctx.stroke();
     }
 
     ctx.strokeStyle = '#f00';
@@ -284,16 +259,18 @@ function hitImage(x, y) {
 
 function handleMouseDown(e) {
     if (!flagPin) {
-        startX = parseInt(e.clientX - offsetX);
-        startY = parseInt(e.clientY - offsetY);
+        startX = parseInt(e.clientX - document.getElementById('canvas').offsetLeft);
+        startY = parseInt(e.clientY - document.getElementById('canvas').offsetTop);
         draggingResizer = anchorHitTest(startX, startY);
         draggingImage = draggingResizer < 0 && hitImage(startX, startY);
     } else {
         var row = tableGlobal.insertRow(tableGlobal.rows.length);
         var cell1 = row.insertCell(0);
         var cell2 = row.insertCell(1);
-        cell1.innerHTML = Math.round((canvasHeight - parseInt(e.clientY - offsetY) - yPadding) / ((canvas.height - 2 * yPadding) / numMaxY));
-        cell2.innerHTML = Math.round((parseInt(e.clientX - offsetX) - xPadding) / ((canvas.width - 2 * xPadding) / numMaxX));
+        var numXscale = canvas.clientWidth / canvas.width;
+        var numYscale = canvas.clientHeight / canvas.height;
+        cell2.innerHTML = Math.round((canvas.clientHeight - parseInt(e.clientY - document.getElementById('canvas').offsetTop) - numYscale * yPadding) / ((canvas.clientHeight - 2 * numYscale * yPadding) / numMaxY));
+        cell1.innerHTML = Math.round((parseInt(e.clientX - document.getElementById('canvas').offsetLeft) - numXscale * xPadding) / ((canvas.clientWidth - 2 * numXscale * xPadding) / numMaxX));
     }
 }
 
@@ -380,6 +357,19 @@ function handleMouseMove(e) {
 
         }
     }
+}
+
+function downloadTables() {
+    var vecTables = document.getElementById('tables').children;
+    var strTextFinal = '';
+    for (var i = 0; i < vecTables.length; i++) {
+        var vecRows = vecTables[i].children[0].children;
+        for (var j = 0; j < vecRows.length; j++) {
+            strTextFinal = strTextFinal+vecRows[j].children[0].textContent+','+vecRows[j].children[1].textContent+'\n';
+        }
+    }
+    var blob = new Blob([strTextFinal], { type: "text/plain;charset=utf-8" });
+    saveAs(blob, "chartdigitizer.txt");
 }
 
 $("#canvas").mousedown(function(e) {
