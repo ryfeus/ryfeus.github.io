@@ -43,14 +43,13 @@ var imageX = 50;
 var imageY = 50;
 var tableGlobal;
 
-
+// var numXscale = canvas.clientWidth / canvas.width;
+// var numYscale = canvas.clientHeight / canvas.height;
 
 var imageWidth, imageHeight, imageRight, imageBottom;
 var draggingImage = false;
 var startX;
 var startY;
-
-
 
 // var img = new Image();
 // img.onload = function () {
@@ -122,6 +121,14 @@ function addTable() {
     cell.innerHTML = "Y";
     document.getElementById('tables').appendChild(newTable);
     tableGlobal = newTable;
+}
+
+function canvas2realX(numX) {
+    return numX*canvas.clientWidth / canvas.width;
+}
+
+function canvas2realY(numY) {
+    return numY*canvas.clientHeight / canvas.height;
 }
 
 function drawAxis() {
@@ -227,26 +234,28 @@ function anchorHitTest(x, y) {
     var dx, dy;
 
     // top-left
-    dx = x - imageX;
-    dy = y - imageY;
+    dx = x - canvas2realX(imageX);
+    dy = y - canvas2realY(imageY);
+    
     if (dx * dx + dy * dy <= rr) {
         return (0);
     }
     // top-right
-    dx = x - imageRight;
-    dy = y - imageY;
+    dx = x - canvas2realX(imageRight);
+    dy = y - canvas2realY(imageY);
+    console.log(dx.toString()+' '+dy.toString());
     if (dx * dx + dy * dy <= rr) {
         return (1);
     }
     // bottom-right
-    dx = x - imageRight;
-    dy = y - imageBottom;
+    dx = x - canvas2realX(imageRight);
+    dy = y - canvas2realY(imageBottom);
     if (dx * dx + dy * dy <= rr) {
         return (2);
     }
     // bottom-left
-    dx = x - imageX;
-    dy = y - imageBottom;
+    dx = x - canvas2realX(imageX);
+    dy = y - canvas2realY(imageBottom);
     if (dx * dx + dy * dy <= rr) {
         return (3);
     }
@@ -254,23 +263,22 @@ function anchorHitTest(x, y) {
 }
 
 function hitImage(x, y) {
-    return (x > imageX && x < imageX + imageWidth && y > imageY && y < imageY + imageHeight);
+    return (x > canvas2realX(imageX) && x < canvas2realX(imageX + imageWidth) && y > canvas2realY(imageY) && y < canvas2realY(imageY + imageHeight));
 }
 
 function handleMouseDown(e) {
     if (!flagPin) {
         startX = parseInt(e.clientX - document.getElementById('canvas').offsetLeft);
         startY = parseInt(e.clientY - document.getElementById('canvas').offsetTop);
+        console.log(startX.toString()+'_'+startY.toString());
         draggingResizer = anchorHitTest(startX, startY);
         draggingImage = draggingResizer < 0 && hitImage(startX, startY);
     } else {
         var row = tableGlobal.insertRow(tableGlobal.rows.length);
         var cell1 = row.insertCell(0);
         var cell2 = row.insertCell(1);
-        var numXscale = canvas.clientWidth / canvas.width;
-        var numYscale = canvas.clientHeight / canvas.height;
-        cell2.innerHTML = Math.round((canvas.clientHeight - parseInt(e.clientY - document.getElementById('canvas').offsetTop) - numYscale * yPadding) / ((canvas.clientHeight - 2 * numYscale * yPadding) / numMaxY));
-        cell1.innerHTML = Math.round((parseInt(e.clientX - document.getElementById('canvas').offsetLeft) - numXscale * xPadding) / ((canvas.clientWidth - 2 * numXscale * xPadding) / numMaxX));
+        cell2.innerHTML = Math.round((canvas.clientHeight - parseInt(e.clientY - document.getElementById('canvas').offsetTop) -  canvas2realY(yPadding)) / ((canvas.clientHeight - 2 *  canvas2realY(yPadding)) / numMaxY));
+        cell1.innerHTML = Math.round((parseInt(e.clientX - document.getElementById('canvas').offsetLeft) - canvas2realX(xPadding)) / ((canvas.clientWidth - 2 * canvas2realX(xPadding)) / numMaxX));
     }
 }
 
@@ -293,9 +301,9 @@ function handleMouseMove(e) {
     if (!flagPin) {
         if (draggingResizer > -1) {
 
-            mouseX = parseInt(e.clientX - offsetX);
-            mouseY = parseInt(e.clientY - offsetY);
-
+            mouseX = parseInt(e.clientX - document.getElementById('canvas').offsetLeft)*canvas.width/canvas.clientWidth;
+            mouseY = parseInt(e.clientY - document.getElementById('canvas').offsetTop)*canvas.height/canvas.clientHeight;
+            console.log(mouseX.toString()+','+mouseY.toString());
             // resize the image
             switch (draggingResizer) {
                 case 0:
@@ -338,8 +346,8 @@ function handleMouseMove(e) {
 
             imageClick = false;
 
-            mouseX = parseInt(e.clientX - offsetX);
-            mouseY = parseInt(e.clientY - offsetY);
+            mouseX = parseInt(e.clientX - document.getElementById('canvas').offsetLeft);
+            mouseY = parseInt(e.clientY - document.getElementById('canvas').offsetTop);
 
             // move the image by the amount of the latest drag
             var dx = mouseX - startX;
