@@ -8,7 +8,6 @@
     <!--Import materialize.css-->
     <link type="text/css" rel="stylesheet" href="css/materialize.min.css" media="screen,projection" />
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-
     <script type="text/javascript">
     </script>
 </head>
@@ -23,20 +22,8 @@
                         <label for="first_name">Max X</label>
                     </div>
                     <div class="input-field col s6">
-                        <input type="text" id="MinX" value="0">
-                        <label for="last_name">Min X</label>
-                    </div>
-                </div>
-            </div>
-            <div class="col s12">
-                <div class="row">
-                    <div class="input-field col s6">
                         <input type="text" id="MaxY" value="100">
                         <label for="first_name">Max Y</label>
-                    </div>
-                    <div class="input-field col s6">
-                        <input type="text" id="MinY" value="0">
-                        <label for="last_name">Min Y</label>
                     </div>
                 </div>
             </div>
@@ -52,16 +39,28 @@
                     </div>
                 </div>
             </div>
-            <a class="waves-effect waves-light btn" onclick="updateAxis();">Update</a>
+            <div class="col s12">
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input type="text" id="MinX" value="0">
+                        <label for="last_name">Min X</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input type="text" id="MinY" value="0">
+                        <label for="last_name">Min Y</label>
+                    </div>
+                </div>
+            </div>
+            <a class="waves-effect waves-light btn" onclick="updateAxis();">Update axis</a>
             <br>
             <br>
-            <a class="waves-effect waves-light btn" onclick="togglePin();">Start pinning</a>
+            <a class="waves-effect waves-light btn" id="idButtonPin" onclick="togglePin();">Start pinning</a>
             <br>
             <br>
             <a class="waves-effect waves-light btn" onclick="addTable();">Add table</a>
             <br>
             <br>
-            <a class="waves-effect waves-light btn" onclick="downloadTables();">Download tables</a>            
+            <a class="waves-effect waves-light btn" onclick="downloadTables();">Download</a>
         </div>
         <div class="col s6">
             <canvas id="canvas" style="border:1px solid red;"></canvas>
@@ -89,37 +88,43 @@
     ga('create', 'UA-81233161-1', 'auto');
     ga('send', 'pageview');
     </script>
-<!-- Yandex.Metrika counter -->
-<!-- Yandex.Metrika counter -->
-<script type="text/javascript">
-    (function (d, w, c) {
+    <!-- Yandex.Metrika counter -->
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+    (function(d, w, c) {
         (w[c] = w[c] || []).push(function() {
             try {
                 w.yaCounter44052979 = new Ya.Metrika({
-                    id:44052979,
-                    clickmap:true,
-                    trackLinks:true,
-                    accurateTrackBounce:true,
-                    webvisor:true
+                    id: 44052979,
+                    clickmap: true,
+                    trackLinks: true,
+                    accurateTrackBounce: true,
+                    webvisor: true
                 });
-            } catch(e) { }
+            } catch (e) {}
         });
 
         var n = d.getElementsByTagName("script")[0],
             s = d.createElement("script"),
-            f = function () { n.parentNode.insertBefore(s, n); };
+            f = function() {
+                n.parentNode.insertBefore(s, n);
+            };
         s.type = "text/javascript";
         s.async = true;
         s.src = "https://mc.yandex.ru/metrika/watch.js";
 
         if (w.opera == "[object Opera]") {
             d.addEventListener("DOMContentLoaded", f, false);
-        } else { f(); }
+        } else {
+            f();
+        }
     })(document, window, "yandex_metrika_callbacks");
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/44052979" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Yandex.Metrika counter -->
-<!-- /Yandex.Metrika counter -->    
+    </script>
+    <noscript>
+        <div><img src="https://mc.yandex.ru/watch/44052979" style="position:absolute; left:-9999px;" alt="" /></div>
+    </noscript>
+    <!-- /Yandex.Metrika counter -->
+    <!-- /Yandex.Metrika counter -->
 </body>
 
 </html>

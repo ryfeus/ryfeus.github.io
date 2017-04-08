@@ -104,8 +104,10 @@ addTable();
 
 function togglePin() {
     if (flagPin) {
+        document.getElementById('idButtonPin').innerHTML = 'Start pinning';
         flagPin = false;
     } else {
+        document.getElementById('idButtonPin').innerHTML = 'Stop pinning';
         flagPin = true;
     }
 }
