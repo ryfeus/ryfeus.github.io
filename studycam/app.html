@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>StudyCam</title>
+    <link rel="stylesheet" href="css/interactioncam.css">
+    <link rel="stylesheet" href="css/materialize.min.css">
+    <script type="text/javascript" src="./js/jquery.min.js"></script>
+    <script type="text/javascript" src="./js/jsfeat-min.js"></script>
+    <script type="text/javascript" src="./js/compatibility.js"></script>
+    <script type="text/javascript" src="./js/profiler.js"></script>
+    <script type="text/javascript" src="./js/whammy.min.js"></script>
+    <script type="text/javascript" src="./js/pixastic.custom.js"></script>
+    <script type="text/javascript" src="./js/ocrad.js"></script>
+    <script type="text/javascript" src="./js/materialize.min.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Roboto: 300,400,700,500' rel='stylesheet' type='text/css'>
+    <script type="text/javascript">
+    $(window).load(function() {
+
+        $('#checkoff').css('display', 'none');
+        var API_KEY = 'eb18642b5b220484864483b8e21386c3';
+        //  ^ get your own at https://imgur.com/register/api_anon
+        //    as it is limited to 50 uploads an hour!
+        var video = document.querySelector('#video'),
+            cover = document.querySelector('#cover'),
+            canvas = document.querySelector('#canvas'),
+            vidcontainer = document.querySelector('#videocontainer'),
+            resetbutton = document.querySelector('#resetbutton'),
+            //startbutton  = document.querySelector('#startbutton'),
+            checkoffbutton = document.querySelector('#checkoff'),
+            startprocessbutton = document.querySelector('#startprocess'),
+            uploadbutton = document.querySelector('#uploadbutton'),
+            urlfield = document.querySelector('#uploaded input'),
+            urllink = document.querySelector('#uploaded a');
+        var checkflag = 0;
+        var redraw = 0;
+        var url;
+        var ctx = canvas.getContext('2d'),
+            streaming = false,
+            width = 600,
+            height = 450,
+            state = 'intro';
+        //frames = [];
+        var encoder = new Whammy.Video(15);
+        var stat = new profiler();
+        var canvasWidth, canvasHeight;
+        var img_u8, img_u8_warp, transform;
+        var step = 1;
+
+        var audio = document.querySelectorAll('audio'),
+            sounds = {
+                shutter: audio[0],
+                rip: audio[1],
+                takeoff: audio[2]
+            };
+
+        /* BRANDING */
+
+        if (location.hostname.indexOf('localhost') !== -1) {
+            document.querySelector('#imgurform').style.display = 'none';
+        }
+
+        setstate(state);
+
+        function init() {
+            $('#yout').hide();
+            $('#yout').stop();
+            $('#11p').hide();
+            $('#22p').hide();
+            if (Boolean(window.chrome)) {
+
+                $("#textBegCam").show();
+                $("#textBegCam").css("position", "relative");
+                $("#textBegCam").css("text-align", "center");
+                // $("#textBegCam").css("left", "40%");
+                $("#textBegCam").css("top", "20%");
+                navigator.getMedia = (navigator.getUserMedia ||
+                    navigator.webkitGetUserMedia ||
+                    navigator.mozGetUserMedia ||
+                    navigator.msGetUserMedia);
+
+                navigator.getMedia({
+                        video: true,
+                        audio: false
+                    },
+                    function(stream) {
+
+                        if (navigator.mozGetUserMedia) {
+                            video.mozSrcObject = stream;
+                        } else {
+                            var vendorURL = window.URL || window.webkitURL;
+                            video.src = vendorURL ? vendorURL.createObjectURL(stream) : stream;
+                        }
+                        $("#textBegCam").hide();
+
+                        $("#textBeg").show();
+                        $("#textBeg").css("position", "relative");
+                        $("#textBeg").css("text-align", "center");
+                        // $("#textBeg").css("left", "25%");
+                        // $("#textBeg").css("top", "5%");
+                        video.play();
+                    },
+                    function(err) {
+                        console.log("An error occured! " + err);
+                    }
+                );
+            } else {
+                $("#textNotChrome").show();
+                $("#textNotChrome").css("position", "relative");
+                $("#textNotChrome").css("text-align", "justify");
+            }
+        }
+
+        function takepicture() {
+            //sounds.shutter.play();
+            ctx.save();
+            ctx.translate(width, 0);
+            ctx.scale(-1, 1);
+
+            ctx.drawImage(video, 0, 0, width, finalheight);
+
+            var imageDataR = ctx.getImageData(0, 0, 640, 480);
+            var imageDataG = ctx.getImageData(0, 0, 640, 480);
+            var imageDataB = ctx.getImageData(0, 0, 640, 480);
+
+
+
+            demo_app();
+
+            if (checkflag == 0) {
+                for (var j = 0; j < imageDataR.data.length; j += 4) {
+                    // red
+                    imageDataR.data[j] = imageDataR.data[j];
+                    // green
+                    imageDataR.data[j + 1] = imageDataR.data[j];
+                    // blue
+                    imageDataR.data[j + 2] = imageDataR.data[j];
+                    // red
+                    imageDataG.data[j] = imageDataG.data[j + 1];
+                    // green
+                    imageDataG.data[j + 1] = imageDataG.data[j + 1];
+                    // blue
+                    imageDataG.data[j + 2] = imageDataG.data[j + 1];
+                    // red
+                    imageDataB.data[j] = imageDataB.data[j + 2];
+                    // green
+                    imageDataB.data[j + 1] = imageDataB.data[j + 2];
+                    // blue
+                    imageDataB.data[j + 2] = imageDataB.data[j + 2];
+                }
+                jsfeat.imgproc.grayscale(imageDataR.data, img_u8.data);
+                jsfeat.imgproc.warp_perspective(img_u8, img_u8_warp, transform, 0);
+                //jsfeat.imgproc.equalize_histogram(img_u8_warp,img_u8_warp);
+
+                // render result back to canvas
+                var data_u32 = new Uint32Array(imageDataR.data.buffer);
+                var alpha = (0xff << 24);
+                var i = img_u8_warp.cols * img_u8_warp.rows,
+                    pix = 0;
+                while (--i >= 0) {
+                    pix = img_u8_warp.data[i];
+                    data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+                }
+
+
+                jsfeat.imgproc.grayscale(imageDataG.data, img_u8.data);
+                jsfeat.imgproc.warp_perspective(img_u8, img_u8_warp, transform, 0);
+                //jsfeat.imgproc.equalize_histogram(img_u8_warp,img_u8_warp);
+                // render result back to canvas
+                var data_u32 = new Uint32Array(imageDataG.data.buffer);
+                var alpha = (0xff << 24);
+                var i = img_u8_warp.cols * img_u8_warp.rows,
+                    pix = 0;
+                while (--i >= 0) {
+                    pix = img_u8_warp.data[i];
+                    data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+                }
+
+
+                jsfeat.imgproc.grayscale(imageDataB.data, img_u8.data);
+                jsfeat.imgproc.warp_perspective(img_u8, img_u8_warp, transform, 0);
+                //jsfeat.imgproc.equalize_histogram(img_u8_warp,img_u8_warp);
+                // render result back to canvas
+                var data_u32 = new Uint32Array(imageDataB.data.buffer);
+                var alpha = (0xff << 24);
+                var i = img_u8_warp.cols * img_u8_warp.rows,
+                    pix = 0;
+                while (--i >= 0) {
+                    pix = img_u8_warp.data[i];
+                    data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+                }
+
+                for (var j = 0; j < imageDataR.data.length; j += 4) {
+                    // red
+                    imageDataR.data[j] = imageDataR.data[j];
+                    // green
+                    imageDataR.data[j + 1] = imageDataG.data[j + 1];
+                    // blue
+                    imageDataR.data[j + 2] = imageDataB.data[j + 2];
+                }
+                //Pixastic.process(imageDataR, "brightness", {brightness:50,contrast:0.5});
+
+            } else {
+                var r = 1;
+
+                jsfeat.imgproc.grayscale(imageDataR.data, img_u8.data);
+                jsfeat.imgproc.warp_perspective(img_u8, img_u8_warp, transform, 0);
+
+                jsfeat.imgproc.gaussian_blur(img_u8_warp, img_u8_warp, kernel_size, 0);
+
+                //jsfeat.imgproc.canny(img_u8_warp, img_u8_warp, 13, 50);
+
+
+                // render result back to canvas
+                var data_u32 = new Uint32Array(imageDataR.data.buffer);
+                var alpha = (0xff << 24);
+                var i = img_u8_warp.cols * img_u8_warp.rows,
+                    pix = 0;
+                while (--i >= 0) {
+                    pix = img_u8_warp.data[i];
+                    data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+                }
+                //jsfeat.imgproc.grayscale(imageDataR.data, img_u8.data);
+                //jsfeat.imgproc.warp_perspective(img_u8, img_u8_warp, transform, 0);
+
+
+                //jsfeat.imgproc.gaussian_blur(img_u8, img_u8, kernel_size, 0);
+
+                //jsfeat.imgproc.canny(img_u8, img_u8, 13, 50);
+
+                //var data_u32 = new Uint32Array(imageDataR.data.buffer);
+                //var alpha = (0xff << 24);
+                //var i = img_u8.cols*img_u8.rows, pix = 0;
+                //while(--i >= 0) {
+                //    pix = img_u8.data[i];
+                //    data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+                //}
+
+            }
+
+
+            ctx.putImageData(imageDataR, 0, 0);
+            ctx.restore();
+            ctx.scale(1, 1);
+            // document.getElementById("textRec").innerHTML=OCRAD(canvas);
+            //frames.push(canvas.toDataURL('image/webp', 1));
+            encoder.add(ctx);
+            nextstep();
+        }
+
+        function nextstep() {
+            if (checkflag == 0) {
+                setTimeout(takepicture, 100);
+
+            }
+
+        }
+
+
+        function render_corners(corners, count, img, step) {
+            var pix = (0xff << 24) | (0xff << 16) | (0xff << 8) | 0xFF;
+            for (var i = 1; i < count; ++i) {
+                var x = corners[i].x;
+                var y = corners[i].y;
+                var off = (x + y * step);
+                img[off] = pix;
+                img[off - 1] = pix;
+                img[off + 1] = pix;
+                img[off - 2] = pix;
+                img[off + 2] = pix;
+                img[off - step] = pix;
+                img[off + step] = pix;
+                img[off - 2 * step] = pix;
+                img[off + 2 * step] = pix;
+            }
+        }
+
+        function nextstep() {
+            if (checkflag == 0) {
+                setTimeout(takepicture, 100);
+            }
+
+        }
+
+        function demo_app() {
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+            ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = "rgb(0,255,0)";
+            ctx.strokeStyle = "rgb(0,255,0)";
+
+            img_u8 = new jsfeat.matrix_t(640, 480, jsfeat.U8_t | jsfeat.C1_t);
+            img_u8_warp = new jsfeat.matrix_t(640, 480, jsfeat.U8_t | jsfeat.C1_t);
+            transform = new jsfeat.matrix_t(3, 3, jsfeat.F32_t | jsfeat.C1_t);
+
+            jsfeat.math.perspective_4point_transform(transform, 50, 430, 0, 0,
+                580, 430, 600, 0,
+                480, 200, 600, 480,
+                170, 200, 0, 480);
+            jsfeat.matmath.invert_3x3(transform, transform);
+
+            stat.add("grayscale");
+            stat.add("warp perspective");
+        }
+
+        function reshoot() {
+            if (state === 'reviewing') {
+                //sounds.rip.play();
+            }
+            if (state === 'reviewing' || state === 'uploaded') {
+                canvas.width = width;
+                canvas.height = finalheight;
+
+                setstate('playing');
+            }
+        }
+
+
+
+        function setstate(newstate) {
+            state = newstate;
+            document.body.className = newstate;
+        }
+
+        function store(name) {
+            if (localStorage.interactionphotos === undefined) {
+                localStorage.interactionphotos = '';
+            }
+            localStorage.interactionphotos += ' ' + name;
+        }
+
+        /* Event Handlers */
+
+        video.addEventListener('canplay', function(ev) {
+            if (!streaming) {
+                finalheight = video.videoHeight / (video.videoWidth / width);
+                video.setAttribute('width', width);
+                video.setAttribute('height', finalheight);
+                canvas.width = width;
+                canvas.height = finalheight;
+
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(170, 200);
+                ctx.lineTo(480, 200);
+                ctx.closePath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#0000FF';
+                ctx.stroke();
+
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(480, 200);
+                ctx.lineTo(580, 430);
+                ctx.closePath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#0000FF';
+                ctx.stroke();
+
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(580, 430);
+                ctx.lineTo(50, 430);
+                ctx.closePath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#0000FF';
+                ctx.stroke();
+
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(50, 430);
+                ctx.lineTo(170, 200);
+                ctx.closePath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#0000FF';
+                ctx.stroke();
+
+                streaming = true;
+                vidcontainer.classname = 'playing';
+                $('#startprocess').css('display', 'block');
+                $('#startprocess').css('position', 'absolute');
+                $('#startprocess').css('top', '90%');
+                $('#startprocess').css('left', '40%');
+                $('#startprocess').css('width', '20%');
+            }
+        }, false);
+
+        // document.addEventListener('keydown', function(ev) {
+        //   if (ev.which === 32 || ev.which === 37 || ev.which === 39) {
+        //     ev.preventDefault();
+        //   }
+        //   if (ev.which === 32) {
+        $(document).ready(function() {
+            if (state === 'intro') {
+                setstate('playing');
+                init();
+            }
+        });
+        //     } else {
+
+        //     }
+        //   }
+        // },false);
+
+        video.addEventListener('click', function(ev) {
+            setstate('reviewing');
+            takepicture();
+        }, false);
+
+        // resetbutton.addEventListener('click', function(ev){
+
+        //   if (state === 'reviewing') {
+        //       $('#textDescripCheck').hide();
+        //       $('#textDescripStep').show();
+        //       //$('#controls').css('top', '');
+        //       setstate('uploading');
+        //       checkflag=0;
+        //       redraw=1;
+        //       setstate('uploaded');
+        //       $('#checkoff').css('display', 'block');
+        //       takepicture();
+        //   }
+        //   ev.preventDefault();
+        // }, false);
+
+
+        startprocessbutton.addEventListener('click', function(ev) {
+
+            $('#textStep').show();
+            $('#textStep').css('position', 'absolute');
+            $('#textStep').css('top', '1%');
+            $('#textStep').css('left', '29%');
+            $('#textDescripStep').show();
+            $('#textDescripStep').css('position', 'absolute');
+            $('#textDescripStep').css('top', '7%');
+            $('#textDescripStep').css('left', '3%');
+            $('#startprocess').css('display', 'none');
+            // $('#checkoff').css('display', 'block');
+            // $('#checkoff').css('position', 'absolute');
+            // $('#checkoff').css('top', '90%');
+            // $('#checkoff').css('left', '40%');
+            $('#textBeg').hide();
+            $('#textRec').show();
+            $('#textRec').css('position', 'absolute');
+            $('#textRec').css('top', '15%');
+            $('#textRec').css('left', '75%');
+            //document.getElementById('canvas').webkitRequestFullScreen();
+            //document.getElementById('canvas').requestFullScreen();
+            takepicture();
+        }, false);
+
+        checkoffbutton.addEventListener('click', function(ev) {
+            //alert('a');
+
+            if (step == 3) {
+                $('#textDescripStep').hide();
+                $('#textDescripFin').show();
+                $('#textDescripFin').css('position', 'absolute');
+                $('#textDescripFin').css('top', '7%');
+                $('#textDescripFin').css('left', '3%');
+
+            } else {
+                $('#textDescripStep').hide();
+                $('#textDescripCheck').show();
+                $('#textDescripCheck').css('position', 'absolute');
+                $('#textDescripCheck').css('top', '7%');
+                $('#textDescripCheck').css('left', '3%');
+            }
+
+            checkflag = 1;
+            $('#checkoff').css('display', 'none');
+            setstate('reviewing');
+            //$('#controls').css('position', 'absolute');
+            //$('#controls').css('top', '90%');
+
+            var output = encoder.compile();
+            url = (window.webkitURL || window.URL).createObjectURL(output);
+            console.log(url);
+            //alert(url);
+            //var video = document.createElement('video');
+            //video.src = window.URL.createObjectURL(webmBlob);
+            //document.body.appendChild(video);
+        }, false);
+
+        // uploadbutton.addEventListener('click', function(ev){
+        //   if (state === 'reviewing') {
+        //     $('#textDescripCheck').hide();
+        //     $('#textDescripStep').show();
+        //     if (step==1)
+        //     {
+        //       window.location.href = url;
+        //     }else{
+        //       //$('#controls').css('top', '');
+        //       setstate('uploading');
+        //       step=step+1;
+        //       checkflag=0;
+        //       redraw=0;
+        //       setstate('uploaded');
+        //       $('#checkoff').css('display', 'block');
+        //       takepicture();
+        //     }
+        //   }
+        //   ev.preventDefault();
+        // }, false);
+
+    });
+    </script>
+</head>
+
+<body background="calculatorContainer.png" onkeydown="zoom()">
+    <div id="videocontainer">
+        <video id="video"></video>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div align="center">
+        <p id="textNotChrome" style="display: none;  width:700px; color: #000; font-family: 'Roboto', sans-serif; font-size:30px; text-align:justify; position:relative;">
+            <br>
+            <br>
+            Sadly our webservice can't work with your browser yet. We are working on it and here is the list of compatible browsers:
+<!--             К сожалению, наш сервис пока что не может работать с Вашим браузером. Мы работаем над этим, а пока что мы можем предложить Вам скачать браузеры, с которыми мы уже работаем: -->
+            <br>
+            <br>-<a href="https://www.google.com/intl/en/chrome/browser/">Chrome</a>
+            <br>-<a href="http://www.opera.com/">Opera</a>
+            <br>-<a href="http://browser.yandex.com/">Yandex-browser</a>
+            <br>
+            <br>
+            <!-- По любым вопросам технической поддержки Вы можете писать на -->
+            Technical support
+            <br><a href="mailto:ryfeus@gmail.com?Subject=StudyCam" target="_top">ryfeus@gmail.com</a>
+        </p>
+        <p id="textBegCam" style="display: none;   color: #000; font-family: 'Roboto', sans-serif; font-size:30px; text-align:center;">
+        <!-- Пожалуйста разрешите сервису использовать камеру⇧ -->
+        Please let service to use cam⇧
+            <br>
+            <!-- Также положите лист бумаги перед ноутбуком -->
+            Please put paper in front of the laptop
+            <br>
+            <br>
+            <br>
+            <!-- По любым вопросам технической поддержки Вы можете писать на -->
+            Technical support:
+            <br><a href="mailto:ryfeus@gmail.com?Subject=StudyCam" target="_top">ryfeus@gmail.com</a></p>
+        <p id="textBeg" style="display: none;   color: #000; font-family: 'Roboto', sans-serif; font-size:25px; width:850px;">
+
+        <!-- Благодарим, теперь пожалуйста наклоните стенку ноутбука так, чтобы лист был полностью в трапеции и нажмите 'Начать работу' -->
+        Thank you. Please tilt the back of the laptop so piece of paper is in trapeze and click on 'Start'
+            <br>
+            <!-- Используйте стрелки ↑ и ↓ для масштаба -->
+            Use keys ↑ and ↓ for zoom
+            </p>
+        <p id="textDescripStep" style="display: none;   color: #1111EE; font-family: 'Roboto', sans-serif; font-size:10px;"></p>
+        <p id="textDescripCheck" style="display: none;   color: #1111EE; font-family: 'Roboto', sans-serif; font-size:10px;"></p>
+        <p id="textDescripFin" style="display: none;   color: #1111EE; font-family: 'Roboto', sans-serif; font-size:10px;"></p>
+    </div>
+    <div id="cover"></div>
+    <div id="uploaded">
+        <form id="imgurform">
+            Uploaded:
+            <input type="text" id="url">
+            <a href="#">link</a>
+        </form>
+        <!-- <button id="startbutton">&lt; Take another</button> -->
+    </div>
+    <!--   <div id="controls"> 
+    <button id="resetbutton">Try again</button>
+    <button id="uploadbutton"> Watch result</button>
+  </div> -->
+    <div id="checkoffdiv">
+        <button id="checkoff">
+        <!-- Закончить -->
+        Finish
+        </button>
+    </div>
+    <div id="startprocessdiv">
+    <a class="waves-effect waves-light btn" id="startprocess">
+    <!-- Начать работу -->
+    Start
+    </a>
+        <!-- <button >Начать работу</button> -->
+    </div>
+    <script src="js/zoom.js"></script>
+    <script type="text/javascript">
+    var zoomlevel = 100;
+
+    function zoom(e) {
+
+        e = e || window.event;
+        if (e.keyCode == '38') {
+            zoomlevel = zoomlevel + 10;
+            // up arrow
+            document.body.style.zoom = zoomlevel.toString() + "%"
+        } else if (e.keyCode == '40') {
+            zoomlevel = zoomlevel - 10;
+            // down arrow
+            document.body.style.zoom = zoomlevel.toString() + "%"
+        }
+
+    }
+    </script>
+    <!-- Yandex.Metrika counter -->
+    <!-- Yandex.Metrika counter -->
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+    (function(d, w, c) {
+        (w[c] = w[c] || []).push(function() {
+            try {
+                w.yaCounter44052979 = new Ya.Metrika({
+                    id: 44052979,
+                    clickmap: true,
+                    trackLinks: true,
+                    accurateTrackBounce: true,
+                    webvisor: true
+                });
+            } catch (e) {}
+        });
+
+        var n = d.getElementsByTagName("script")[0],
+            s = d.createElement("script"),
+            f = function() {
+                n.parentNode.insertBefore(s, n);
+            };
+        s.type = "text/javascript";
+        s.async = true;
+        s.src = "https://mc.yandex.ru/metrika/watch.js";
+
+        if (w.opera == "[object Opera]") {
+            d.addEventListener("DOMContentLoaded", f, false);
+        } else {
+            f();
+        }
+    })(document, window, "yandex_metrika_callbacks");
+    </script>
+    <noscript>
+        <div><img src="https://mc.yandex.ru/watch/44052979" style="position:absolute; left:-9999px;" alt="" /></div>
+    </noscript>
+    <!-- /Yandex.Metrika counter -->
+    <!-- /Yandex.Metrika counter -->
+    <script>
+    (function(i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function() {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+            m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-81233161-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+</body>
+
+</html>
