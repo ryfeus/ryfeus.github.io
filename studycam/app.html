@@ -14,14 +14,11 @@
     <script type="text/javascript" src="./js/pixastic.custom.js"></script>
     <script type="text/javascript" src="./js/ocrad.js"></script>
     <script type="text/javascript" src="./js/materialize.min.js"></script>
-    <link href='http://fonts.googleapis.com/css?family=Roboto: 300,400,700,500' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto: 300,400,700,500' rel='stylesheet' type='text/css'>
     <script type="text/javascript">
     $(window).load(function() {
 
         $('#checkoff').css('display', 'none');
-        var API_KEY = 'eb18642b5b220484864483b8e21386c3';
-        //  ^ get your own at https://imgur.com/register/api_anon
-        //    as it is limited to 50 uploads an hour!
         var video = document.querySelector('#video'),
             cover = document.querySelector('#cover'),
             canvas = document.querySelector('#canvas'),
@@ -70,41 +67,21 @@
             $('#22p').hide();
             if (Boolean(window.chrome)) {
 
-                $("#textBegCam").show();
-                $("#textBegCam").css("position", "relative");
-                $("#textBegCam").css("text-align", "center");
-                // $("#textBegCam").css("left", "40%");
-                $("#textBegCam").css("top", "20%");
-                navigator.getMedia = (navigator.getUserMedia ||
-                    navigator.webkitGetUserMedia ||
-                    navigator.mozGetUserMedia ||
-                    navigator.msGetUserMedia);
+                $("#textBeg").show();
+                $("#textBeg").css("position", "relative");
+                $("#textBeg").css("text-align", "center");
+                $("#textBeg").css("top", "20%");
 
-                navigator.getMedia({
-                        video: true,
-                        audio: false
-                    },
-                    function(stream) {
-
-                        if (navigator.mozGetUserMedia) {
-                            video.mozSrcObject = stream;
-                        } else {
-                            var vendorURL = window.URL || window.webkitURL;
-                            video.src = vendorURL ? vendorURL.createObjectURL(stream) : stream;
-                        }
-                        $("#textBegCam").hide();
-
-                        $("#textBeg").show();
-                        $("#textBeg").css("position", "relative");
-                        $("#textBeg").css("text-align", "center");
-                        // $("#textBeg").css("left", "25%");
-                        // $("#textBeg").css("top", "5%");
-                        video.play();
-                    },
-                    function(err) {
-                        console.log("An error occured! " + err);
-                    }
-                );
+                video = document.querySelector('#video');
+                canvas = document.querySelector('#canvas');
+                    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.log("An error occurred: " + err);
+                });
             } else {
                 $("#textNotChrome").show();
                 $("#textNotChrome").css("position", "relative");
@@ -311,7 +288,7 @@
             }
             if (state === 'reviewing' || state === 'uploaded') {
                 canvas.width = width;
-                canvas.height = finalheight;
+                canvas.height = finalheight || height;
 
                 setstate('playing');
             }
@@ -387,44 +364,17 @@
             }
         }, false);
 
-        // document.addEventListener('keydown', function(ev) {
-        //   if (ev.which === 32 || ev.which === 37 || ev.which === 39) {
-        //     ev.preventDefault();
-        //   }
-        //   if (ev.which === 32) {
         $(document).ready(function() {
             if (state === 'intro') {
                 setstate('playing');
                 init();
             }
         });
-        //     } else {
-
-        //     }
-        //   }
-        // },false);
 
         video.addEventListener('click', function(ev) {
             setstate('reviewing');
             takepicture();
         }, false);
-
-        // resetbutton.addEventListener('click', function(ev){
-
-        //   if (state === 'reviewing') {
-        //       $('#textDescripCheck').hide();
-        //       $('#textDescripStep').show();
-        //       //$('#controls').css('top', '');
-        //       setstate('uploading');
-        //       checkflag=0;
-        //       redraw=1;
-        //       setstate('uploaded');
-        //       $('#checkoff').css('display', 'block');
-        //       takepicture();
-        //   }
-        //   ev.preventDefault();
-        // }, false);
-
 
         startprocessbutton.addEventListener('click', function(ev) {
 
@@ -472,39 +422,9 @@
             checkflag = 1;
             $('#checkoff').css('display', 'none');
             setstate('reviewing');
-            //$('#controls').css('position', 'absolute');
-            //$('#controls').css('top', '90%');
-
             var output = encoder.compile();
             url = (window.webkitURL || window.URL).createObjectURL(output);
-            console.log(url);
-            //alert(url);
-            //var video = document.createElement('video');
-            //video.src = window.URL.createObjectURL(webmBlob);
-            //document.body.appendChild(video);
         }, false);
-
-        // uploadbutton.addEventListener('click', function(ev){
-        //   if (state === 'reviewing') {
-        //     $('#textDescripCheck').hide();
-        //     $('#textDescripStep').show();
-        //     if (step==1)
-        //     {
-        //       window.location.href = url;
-        //     }else{
-        //       //$('#controls').css('top', '');
-        //       setstate('uploading');
-        //       step=step+1;
-        //       checkflag=0;
-        //       redraw=0;
-        //       setstate('uploaded');
-        //       $('#checkoff').css('display', 'block');
-        //       takepicture();
-        //     }
-        //   }
-        //   ev.preventDefault();
-        // }, false);
-
     });
     </script>
 </head>
@@ -598,60 +518,6 @@
         }
 
     }
-    </script>
-    <!-- Yandex.Metrika counter -->
-    <!-- Yandex.Metrika counter -->
-    <!-- Yandex.Metrika counter -->
-    <script type="text/javascript">
-    (function(d, w, c) {
-        (w[c] = w[c] || []).push(function() {
-            try {
-                w.yaCounter44052979 = new Ya.Metrika({
-                    id: 44052979,
-                    clickmap: true,
-                    trackLinks: true,
-                    accurateTrackBounce: true,
-                    webvisor: true
-                });
-            } catch (e) {}
-        });
-
-        var n = d.getElementsByTagName("script")[0],
-            s = d.createElement("script"),
-            f = function() {
-                n.parentNode.insertBefore(s, n);
-            };
-        s.type = "text/javascript";
-        s.async = true;
-        s.src = "https://mc.yandex.ru/metrika/watch.js";
-
-        if (w.opera == "[object Opera]") {
-            d.addEventListener("DOMContentLoaded", f, false);
-        } else {
-            f();
-        }
-    })(document, window, "yandex_metrika_callbacks");
-    </script>
-    <noscript>
-        <div><img src="https://mc.yandex.ru/watch/44052979" style="position:absolute; left:-9999px;" alt="" /></div>
-    </noscript>
-    <!-- /Yandex.Metrika counter -->
-    <!-- /Yandex.Metrika counter -->
-    <script>
-    (function(i, s, o, g, r, a, m) {
-        i['GoogleAnalyticsObject'] = r;
-        i[r] = i[r] || function() {
-            (i[r].q = i[r].q || []).push(arguments)
-        }, i[r].l = 1 * new Date();
-        a = s.createElement(o),
-            m = s.getElementsByTagName(o)[0];
-        a.async = 1;
-        a.src = g;
-        m.parentNode.insertBefore(a, m)
-    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
-
-    ga('create', 'UA-81233161-1', 'auto');
-    ga('send', 'pageview');
     </script>
 </body>
 
